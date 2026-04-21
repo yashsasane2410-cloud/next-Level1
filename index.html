@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXT LEVEL | eSports Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00ff88; --blue: #00d2ff; --bg: #050810; --card: rgba(15, 23, 42, 0.85); --border: rgba(0, 210, 255, 0.25); }
+        * { box-sizing: border-box; font-family: 'Rajdhani', sans-serif; -webkit-tap-highlight-color: transparent; transition: 0.3s; }
+        body { margin: 0; background: var(--bg); color: #fff; padding-bottom: 90px; background-image: radial-gradient(circle at 50% 0%, #0a1428, #050810); background-attachment: fixed; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(5,8,16,0.85); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        .logo-text { font-family: 'Orbitron'; font-weight: 900; color: var(--blue); font-size: 20px; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,210,255,0.4); }
+        .coin-box { background: rgba(0,210,255,0.1); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); color: #fff; font-family: 'Orbitron'; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: inset 0 0 10px rgba(0,210,255,0.1); }
+
+        .nav { position: fixed; bottom: 0; width: 100%; background: rgba(5,8,16,0.95); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid var(--border); z-index: 1000; backdrop-filter: blur(15px); }
+        .nav-item { font-size: 24px; opacity: 0.4; color: #fff; transition: 0.3s; cursor: pointer; padding: 5px 20px; border-radius: 10px; }
+        .nav-item.active { opacity: 1; color: var(--neon); text-shadow: 0 0 15px var(--neon); transform: translateY(-3px); }
+
+        .view { display: none; padding: 15px; animation: fadeIn 0.4s ease-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .t-card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 20px; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,210,255,0.05); position: relative; overflow: hidden; }
+        .card-header-new { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .game-title-new { font-family: 'Orbitron'; font-weight: 900; font-size: 18px; color: #fff; text-transform: uppercase; margin: 0; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        .game-status-badge { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-family: 'Orbitron'; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .status-upcoming { background: rgba(0,255,136,0.1); color: var(--neon); border: 1px solid rgba(0,255,136,0.3); box-shadow: 0 0 10px rgba(0,255,136,0.1); }
+        .status-ongoing { background: rgba(0,210,255,0.1); color: var(--blue); border: 1px solid rgba(0,210,255,0.3); box-shadow: 0 0 10px rgba(0,210,255,0.1); }
+        .status-completed { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+
+        .prize-container { background: linear-gradient(90deg, rgba(250,204,21,0.1), rgba(0,0,0,0.4)); border: 1px solid rgba(250,204,21,0.3); border-left: 4px solid #facc15; padding: 10px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .prize-label { color: #facc15; font-size: 13px; font-weight: 700; letter-spacing: 1px; font-family: 'Orbitron'; display: flex; align-items: center; gap: 8px; }
+        .prize-amt { color: #facc15; font-family: 'Orbitron'; font-size: 22px; font-weight: 900; text-shadow: 0 0 15px rgba(250,204,21,0.5); }
+
+        .info-grid-new { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+        .info-pill { background: rgba(0,0,0,0.5); padding: 10px 5px; border-radius: 10px; text-align: center; border: 1px solid rgba(0,210,255,0.15); box-shadow: inset 0 0 8px rgba(0,210,255,0.05); }
+        .info-pill small { color: #94a3b8; font-size: 10px; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
+        .info-pill b { color: var(--blue); font-size: 14px; font-family: 'Orbitron'; font-weight: 700; text-shadow: 0 0 8px rgba(0,210,255,0.3); }
+
+        .rules-box { background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px; font-size: 13px; color: #cbd5e1; border: 1px dashed rgba(255,255,255,0.1); margin-bottom: 15px; }
+        .progress-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+        .slot-bar { width: 100%; height: 6px; background: rgba(0,0,0,0.8); border-radius: 6px; overflow: hidden; margin-bottom: 15px; border: 1px solid #334; }
+        .slot-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease-in-out; box-shadow: 0 0 10px var(--neon); }
+
+        .btn-pro { width: 100%; padding: 15px; border: none; background: linear-gradient(90deg, var(--neon), var(--blue)); color: #000; font-weight: 900; font-family: 'Orbitron'; border-radius: 10px; cursor: pointer; text-transform: uppercase; font-size: 15px; transition: 0.2s; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(0,255,136,0.3); }
+        .btn-pro:active { transform: scale(0.96); box-shadow: 0 0 10px rgba(0,255,136,0.5); }
+        .btn-disabled { background: rgba(255,255,255,0.05); color: #94a3b8; box-shadow: none; border: 1px solid rgba(255,255,255,0.1); cursor: not-allowed; }
+
+        .id-pass-box { background: rgba(0,0,0,0.6); border: 1px dashed var(--blue); border-radius: 10px; padding: 15px; text-align: center; margin-top: 10px; box-shadow: inset 0 0 15px rgba(0,210,255,0.1); }
+        .id-label { font-size: 11px; color: var(--blue); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; font-family: 'Orbitron'; }
+        .id-val { font-family: 'Orbitron'; font-size: 18px; color: #fff; font-weight: 700; letter-spacing: 1px; }
+        .copy-btn { display:inline-flex; align-items:center; cursor:pointer; padding:5px 10px; background:rgba(255,255,255,0.1); border-radius:5px; margin-left:10px; transition:0.2s; }
+        .copy-btn:active { background:var(--neon); color:#000; transform:scale(0.9); }
+
+        .tab-bar { display: flex; background: rgba(0,0,0,0.4); border-radius: 12px; margin-bottom: 20px; padding: 5px; border: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; font-size: 12px; border-radius: 8px; cursor: pointer; color: #94a3b8; font-family: 'Orbitron'; font-weight: 700; transition: 0.3s; letter-spacing: 1px; }
+        .tab-btn.active { color: #000; background: var(--neon); box-shadow: 0 0 15px rgba(0,255,136,0.4); }
+
+        #modal, #room-alert-modal, #winner-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 99999; padding: 15px; }
+        .modal-card { background: rgba(10,15,30,0.95); padding: 25px; border-radius: 16px; border: 1px solid var(--neon); width: 100%; max-width: 360px; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,255,136,0.2); max-height: 85vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: -12px; right: -12px; font-size: 22px; background: #ff4444; width: 32px; height: 32px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #000; box-shadow: 0 0 10px red; z-index: 10;}
+        
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: #fff; border-radius: 10px; outline: none; font-size: 15px; font-family: 'Rajdhani'; font-weight: 600; }
+        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,255,136,0.2); }
+
+        .auth-tabs { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid #334; margin-bottom: 20px; }
+        .auth-tab { flex: 1; padding: 12px; font-weight: 700; font-family: 'Orbitron'; cursor: pointer; font-size: 13px; text-align: center; transition: 0.3s; }
+
+        #live-noti { position: fixed; top: -150px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 420px; background: linear-gradient(90deg, rgba(15,23,42,0.95), rgba(0,0,0,0.95)); border: 1px solid var(--neon); box-shadow: 0 10px 30px rgba(0,255,136,0.3); border-radius: 16px; padding: 15px; z-index: 999999; display: flex; align-items: center; justify-content: space-between; transition: 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); backdrop-filter: blur(15px); }
+        #live-noti.show { top: 20px; }
+        
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(50px); background: linear-gradient(90deg, var(--neon), var(--blue)); color: #000; padding: 12px 25px; border-radius: 50px; font-family: 'Orbitron'; font-weight: 900; font-size: 13px; z-index: 9999999; opacity: 0; transition: 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 5px 20px rgba(0,255,136,0.5); pointer-events: none; white-space: nowrap; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        .slider-wrapper { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; border-radius: 14px; margin-bottom: 15px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .slider-wrapper::-webkit-scrollbar { display: none; }
+        .slide { scroll-snap-align: center; min-width: 100%; flex-shrink: 0; }
+        .slide img { width: 100%; height: 160px; object-fit: cover; display: block; }
+        
+        #splash-screen { position: fixed; inset: 0; background: #050810; z-index: 9999999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s; }
+        .splash-logo { font-family: 'Orbitron'; font-size: 40px; font-weight: 900; color: var(--blue); animation: pulseLogo 1.5s infinite alternate; text-shadow: 0 0 20px rgba(0,210,255,0.6); text-align: center;}
+        .splash-text { font-family: 'Orbitron'; color: var(--neon); font-size: 14px; margin-top: 15px; letter-spacing: 3px; }
+        @keyframes pulseLogo { 0% { transform: scale(0.95); opacity: 0.8; } 100% { transform: scale(1.05); opacity: 1; text-shadow: 0 0 40px rgba(0,210,255,0.8); } }
+
+        .step-box { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; align-items: center; margin-bottom: 12px; }
+        .step-num { width: 35px; height: 35px; background: rgba(0,210,255,0.1); color: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 16px; margin-right: 15px; border: 1px solid var(--blue); flex-shrink: 0;}
+    </style>
+</head>
+<body>
+
+<div id="toast">COPIED SUCCESSFULLY!</div>
+
+<div id="splash-screen">
+    <img id="splash-logo-img" src="" style="display:none; width:150px; height:150px; object-fit:contain; margin-bottom:20px; border-radius:20px; box-shadow:0 0 30px rgba(0,210,255,0.4); animation: pulseLogo 1.5s infinite alternate;">
+    <div class="splash-logo" id="splash-text-logo">NEXT LEVEL</div>
+    <div class="splash-text">INITIALIZING SYSTEMS...</div>
+</div>
+
+<div id="update-screen" style="position:fixed; inset:0; background:#050810; z-index:10000000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; text-align:center;">
+    <div style="font-size:60px; margin-bottom:20px; animation:pulseLogo 2s infinite;">🚀</div>
+    <h1 style="color:var(--neon); font-family:'Orbitron'; text-shadow: 0 0 15px var(--neon);">UPDATE REQUIRED</h1>
+    <p style="color:var(--text-muted); font-size:15px; font-weight:700; margin-bottom: 30px;">A new version of NEXT LEVEL is available. Please update the app to continue playing.</p>
+    <a id="update-link-btn" href="#" target="_blank" class="btn-pro" style="text-decoration:none; display:inline-block; padding:18px; width:80%;">DOWNLOAD NEW UPDATE</a>
+</div>
+
+<div id="live-noti">
+    <div style="display:flex; align-items:center; gap:15px; flex: 1;">
+        <div style="font-size:28px; filter: drop-shadow(0 0 5px var(--neon));">🔔</div>
+        <div>
+            <div style="font-weight:900; font-family:'Orbitron'; color:var(--neon); font-size:14px; text-transform:uppercase; letter-spacing:1px;" id="noti-title">UPDATE</div>
+            <div style="font-size:13px; color:#cbd5e1; margin-top:2px; font-weight:600;" id="noti-msg">Message</div>
+        </div>
+    </div>
+    <a href="#" id="noti-link" target="_blank" style="display:none; padding:10px 15px; background:var(--blue); color:#000; text-decoration:none; border-radius:8px; font-weight:900; font-size:12px; font-family:'Orbitron'; box-shadow: 0 0 10px var(--blue); margin-left: 10px;">VIEW</a>
+    <div style="position: absolute; top: -10px; right: -10px; background: #ff4444; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 2px solid #000; box-shadow: 0 0 10px red;" onclick="closeLiveNoti()">×</div>
+</div>
+
+<div id="maintenance-screen" style="position:fixed; inset:0; background:#050810; z-index:1000000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; text-align:center;">
+    <div style="font-size:60px; margin-bottom:20px; animation: pulse 2s infinite;">⚠️</div>
+    <h1 style="color:#ff4444; font-size:26px; font-family:'Orbitron'; text-shadow: 0 0 15px red;">SYSTEM OFFLINE</h1>
+    <p style="color:var(--blue); font-size:15px; font-weight:700;">We are currently upgrading our servers.<br>Please check back shortly.</p>
+</div>
+
+<div id="auth-screen" style="position:fixed; inset:0; background:#050810; z-index:10001; display:flex; align-items:center; justify-content:center; padding:20px; display:none;">
+    <div class="modal-card" style="padding: 30px; background: rgba(10,15,30,0.95); border: 1px solid var(--border);">
+        <div style="font-family:'Orbitron'; font-size:26px; color:var(--blue); font-weight:900; margin-bottom:25px; text-shadow: 0 0 15px var(--blue);">NEXT LEVEL</div>
+        <div class="auth-tabs">
+            <div id="tab-login" class="auth-tab" style="background:var(--neon); color:#000; box-shadow: 0 0 10px var(--neon);" onclick="setAuthMode(true)">LOGIN</div>
+            <div id="tab-signup" class="auth-tab" style="background:rgba(0,0,0,0.5); color:var(--text-muted);" onclick="setAuthMode(false)">SIGN UP</div>
+        </div>
+        <input type="email" id="auth-email" placeholder="Email Address">
+        <input type="password" id="auth-pass" placeholder="Password (Min 6 chars)">
+        <div id="reg-extra" style="display:none;">
+            <input type="text" id="refer-input" placeholder="Referral Code (Optional)">
+        </div>
+        <button id="auth-btn" class="btn-pro" onclick="handleAuth()" style="margin-top:15px;">ENTER SECURELY</button>
+        <div style="margin-top:25px; padding-top:20px; border-top:1px dashed #334;">
+            <a href="#" id="login-tg-link" target="_blank" style="text-decoration:none; color:var(--blue); font-size:13px; font-weight:700; font-family:'Orbitron';">✈️ CONTACT SUPPORT</a>
+        </div>
+    </div>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="header">
+        <div class="logo-text">NEXT LEVEL</div>
+        <div class="coin-box" onclick="showTab('wallet', document.querySelectorAll('.nav-item')[2])">
+            ₹<span id="u-total">0</span>
+        </div>
+    </div>
+
+    <div id="view-home" class="view active">
+        <div id="banner-list"></div>
+        <h4 style="font-family:'Orbitron'; font-weight:900; color:var(--neon); font-size:14px; margin:20px 0 15px 0; text-transform:uppercase; letter-spacing:1px;">🔥 Select Game</h4>
+        <div id="cat-list" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"></div>
+    </div>
+
+    <div id="view-matches" class="view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <button onclick="showTab('home', document.querySelectorAll('.nav-item')[0])" style="border:1px dashed var(--blue); background:rgba(0,210,255,0.1); padding:10px 20px; border-radius:8px; color:var(--blue); font-weight:700; font-size:13px; cursor:pointer;">← BACK TO GAMES</button>
+        </div>
+        <div class="tab-bar">
+            <div id="tab-upcoming" class="tab-btn active" onclick="setFilter('upcoming')">UPCOMING</div>
+            <div id="tab-ongoing" class="tab-btn" onclick="setFilter('ongoing')">ONGOING</div>
+            <div id="tab-completed" class="tab-btn" onclick="setFilter('completed')">RESULT</div>
+        </div>
+        <div id="m-list"></div>
+    </div>
+
+    <div id="view-refer" class="view">
+        <div class="t-card" style="text-align:center; padding-top:20px;">
+            <div style="font-size:50px; margin-bottom:10px; filter:drop-shadow(0 0 15px #facc15);">🎁</div>
+            <h2 style="font-family:'Orbitron'; color:#facc15; margin-top:0; text-shadow:0 0 10px rgba(250,204,21,0.5);">REFER & EARN</h2>
+            <p style="color:var(--text-muted); font-size:13px; font-weight:600; margin-bottom:20px;">Invite your friends to NEXT LEVEL and both of you will earn real cash in your wallets!</p>
+            
+            <div style="background:rgba(0,255,136,0.05); padding:20px; border-radius:12px; border:1px dashed var(--neon); margin-bottom:25px; box-shadow:inset 0 0 15px rgba(0,255,136,0.05);">
+                <div style="color:var(--text-muted); font-size:12px; font-weight:700; margin-bottom:5px; font-family:'Orbitron';">YOUR UNIQUE CODE</div>
+                <div id="refer-page-code" onclick="copyToClipboard(this.innerText, 'REFERRAL CODE')" style="font-family:'Orbitron'; font-size:36px; font-weight:900; color:var(--neon); letter-spacing:4px; margin-bottom:5px; text-shadow:0 0 15px rgba(0,255,136,0.4); cursor:pointer; display:inline-block; padding:5px 15px;">...</div>
+                <div style="font-size:11px; color:var(--blue); font-weight:700;">(TAP CODE TO COPY)</div>
+            </div>
+
+            <div style="text-align:left; margin-bottom:25px;">
+                <h4 style="font-family:'Orbitron'; color:var(--blue); font-size:14px; border-bottom:1px solid var(--border); padding-bottom:5px;">HOW IT WORKS?</h4>
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <div style="font-size:13px; color:#cbd5e1; font-weight:600;"><b>Share your link</b> & code with your gamer friends.</div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <div style="font-size:13px; color:#cbd5e1; font-weight:600;">Your friend registers using your Referral Code.</div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">3</div>
+                    <div style="font-size:13px; color:#cbd5e1; font-weight:600;">You get <b style="color:var(--neon); font-size:15px;">₹<span id="ref-amt-you">0</span></b> and your friend gets <b style="color:var(--blue); font-size:15px;">₹<span id="ref-amt-friend">0</span></b> instantly!</div>
+                </div>
+            </div>
+            <button class="btn-pro" style="background:linear-gradient(90deg, #facc15, #ffaa00); color:#000; box-shadow: 0 5px 15px rgba(250,204,21,0.4); font-size:16px;" onclick="shareApp()">📤 SHARE NOW</button>
+        </div>
+    </div>
+
+    <div id="view-wallet" class="view">
+        <div class="t-card" style="text-align:center;">
+            <div style="color:var(--text-muted); font-size:12px; font-weight:700; margin-bottom:5px; font-family:'Orbitron';">TOTAL BALANCE</div>
+            <div style="font-size:36px; font-family:'Orbitron'; font-weight:900; margin-bottom:20px; color:#fff; text-shadow:0 0 10px rgba(255,255,255,0.3);">₹<span id="w-total-big">0</span></div>
+            
+            <div style="display:flex; justify-content:space-around; margin-bottom:20px; background:rgba(0,0,0,0.5); padding:15px; border-radius:12px; border:1px solid var(--border);">
+                <div>
+                    <small style="color:var(--text-muted); font-weight:700; font-size:11px;">WINNINGS</small><br>
+                    <b id="u-win" style="color:var(--neon); font-size:20px; font-family:'Orbitron'; text-shadow:0 0 10px rgba(0,255,136,0.3);">₹0</b>
+                </div>
+                <div style="width:1px; background:var(--border);"></div>
+                <div>
+                    <small style="color:var(--text-muted); font-weight:700; font-size:11px;">DEPOSIT</small><br>
+                    <b id="u-dep" style="color:var(--blue); font-size:20px; font-family:'Orbitron'; text-shadow:0 0 10px rgba(0,210,255,0.3);">₹0</b>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn-pro" onclick="openDeposit()">DEPOSIT</button>
+                <button class="btn-pro" style="background:rgba(255,68,68,0.1); color:#ff4444; border:1px solid rgba(255,68,68,0.3); box-shadow:none;" onclick="openWithdraw()">WITHDRAW</button>
+            </div>
+        </div>
+
+        <div class="t-card">
+            <div style="font-size:13px; font-weight:700; font-family:'Orbitron'; color:var(--blue); margin-bottom:10px;">REDEEM PROMO CODE</div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="p-code" placeholder="Enter Code" style="margin:0;">
+                <button onclick="applyPromo()" style="padding:0 25px; border:none; background:var(--neon); color:#000; font-weight:900; font-family:'Orbitron'; border-radius:10px; cursor:pointer;">APPLY</button>
+            </div>
+        </div>
+
+        <h4 style="font-weight:900; font-family:'Orbitron'; color:var(--text-muted); font-size:13px; text-transform:uppercase;">Transaction History</h4>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="view-profile" class="view">
+        <div class="t-card" style="text-align:center; padding-top: 30px;">
+            <div style="width:70px; height:70px; background:linear-gradient(135deg, var(--neon), var(--blue)); border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:32px; color:#000; box-shadow:0 0 20px rgba(0,210,255,0.4);">👤</div>
+            <div id="p-email" style="font-size:18px; font-weight:700; color:#fff; margin-bottom:25px; font-family:'Orbitron';">---</div>
+            
+            <div style="text-align:left; margin-bottom:20px;">
+                <h4 style="font-family:'Orbitron'; color:var(--blue); font-size:13px; text-transform:uppercase; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">🎮 My Joined Matches</h4>
+                <div id="my-matches-list" style="max-height:200px; overflow-y:auto;">Loading matches...</div>
+            </div>
+
+            <div style="text-align:left; background:rgba(0,0,0,0.5); border-radius:12px; border:1px solid var(--border); overflow:hidden;">
+                <a href="#" onclick="openTCModal(); return false;" style="display:flex; justify-content:space-between; padding:16px; border-bottom:1px solid #1e293b; text-decoration:none; color:#facc15; font-size:14px; font-weight:700; font-family:'Orbitron';">
+                    <span>📜 TERMS & CONDITIONS</span> <span>→</span>
+                </a>
+                <a href="#" id="tg-chan" target="_blank" style="display:flex; justify-content:space-between; padding:16px; border-bottom:1px solid #1e293b; text-decoration:none; color:var(--blue); font-size:14px; font-weight:700; font-family:'Orbitron';">
+                    <span>✈️ TELEGRAM SUPPORT</span> <span>→</span>
+                </a>
+                <a href="#" id="yt-chan" target="_blank" style="display:flex; justify-content:space-between; padding:16px; text-decoration:none; color:#ff4444; font-size:14px; font-weight:700; font-family:'Orbitron';">
+                    <span>📺 YOUTUBE CHANNEL</span> <span>→</span>
+                </a>
+            </div>
+            
+            <button class="btn-pro" style="margin-top:25px; background:rgba(255,68,68,0.1); color:#ff4444; box-shadow:none; border:1px solid rgba(255,68,68,0.3);" onclick="auth.signOut()">LOGOUT SESSION</button>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:25px; font-family:'Orbitron'; letter-spacing:1px; font-weight:bold;">APP VERSION: 1.0.0</div>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-item active" onclick="showTab('home', this)">🏠</div>
+        <div class="nav-item" onclick="showTab('refer', this)">🎁</div>
+        <div class="nav-item" onclick="showTab('wallet', this)">💳</div>
+        <div class="nav-item" onclick="showTab('profile', this)">👤</div>
+    </nav>
+</div>
+
+<div id="modal">
+    <div class="modal-card" id="m-wrapper">
+        <div class="close-btn" onclick="closeM()">×</div>
+        <div id="m-content"></div>
+    </div>
+</div>
+
+<div id="room-alert-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999999; display:none; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:rgba(10,15,30,0.95); padding:30px; border-radius:20px; border:2px solid var(--neon); width:100%; max-width:380px; text-align:center; box-shadow:0 0 50px rgba(0,255,136,0.4); position:relative;">
+        <div style="font-size:60px; margin-bottom:15px; filter:drop-shadow(0 0 15px var(--neon)); animation:pulseLogo 1s infinite;">🎮</div>
+        <h2 style="color:var(--neon); font-family:'Orbitron'; margin-top:0; text-shadow:0 0 10px var(--neon);">ROOM DETAILS ARRIVED!</h2>
+        <p style="color:#cbd5e1; font-size:14px; font-weight:700; margin-bottom:20px;">Admin has sent the ID & Password for your match: <b style="color:var(--blue);" id="alert-m-name">MATCH</b></p>
+        
+        <div style="background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; border:1px dashed var(--blue); margin-bottom:20px;">
+            <div style="margin-bottom:15px;">
+                <small style="color:var(--text-muted); font-weight:700; font-family:'Orbitron';">ROOM ID</small><br>
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:5px;">
+                    <b style="font-size:22px; color:#fff; letter-spacing:2px; font-family:'Orbitron';" id="alert-m-id">123456</b>
+                    <span class="copy-btn" onclick="copyToClipboard(document.getElementById('alert-m-id').innerText, 'ROOM ID')">📋</span>
+                </div>
+            </div>
+            <div>
+                <small style="color:var(--text-muted); font-weight:700; font-family:'Orbitron';">PASSWORD</small><br>
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:5px;">
+                    <b style="font-size:22px; color:var(--neon); letter-spacing:2px; font-family:'Orbitron';" id="alert-m-pass">PASS123</b>
+                    <span class="copy-btn" onclick="copyToClipboard(document.getElementById('alert-m-pass').innerText, 'PASSWORD')">📋</span>
+                </div>
+            </div>
+        </div>
+        <button class="btn-pro" onclick="document.getElementById('room-alert-modal').style.display='none'">LET'S PLAY! 🔥</button>
+    </div>
+</div>
+
+<div id="winner-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999999; display:none; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:rgba(10,15,30,0.95); padding:30px; border-radius:20px; border:2px solid #facc15; width:100%; max-width:380px; text-align:center; box-shadow:0 0 60px rgba(250,204,21,0.5); position:relative; overflow:hidden;">
+        <div style="position:absolute; inset:0; background:radial-gradient(circle, rgba(250,204,21,0.2) 0%, transparent 70%); z-index:0;"></div>
+        <div style="position:relative; z-index:1;">
+            <div style="font-size:70px; margin-bottom:10px; animation:pulseLogo 1s infinite;">🏆</div>
+            <h2 style="color:#facc15; font-family:'Orbitron'; margin-top:0; text-shadow:0 0 15px #facc15;">CONGRATULATIONS!</h2>
+            <p style="color:#cbd5e1; font-size:15px; font-weight:700; margin-bottom:10px;">You are the Winner of <br><b style="color:var(--neon); font-size:18px;" id="win-m-name">MATCH</b></p>
+            <div style="background:rgba(0,0,0,0.5); border-radius:12px; padding:15px; margin-bottom:20px; border:1px dashed #facc15;">
+                <small style="color:var(--text-muted); font-weight:700;">WINNING PRIZE</small>
+                <div style="font-size:45px; color:var(--neon); font-weight:900; font-family:'Orbitron'; text-shadow:0 0 20px var(--neon);">₹<span id="win-m-amt">0</span></div>
+            </div>
+            <p style="color:var(--blue); font-size:13px; margin-bottom:20px; font-weight:bold;">Prize has been successfully added to your Wallet!</p>
+            <button class="btn-pro" style="background:linear-gradient(90deg, #facc15, #ffaa00); color:#000; box-shadow:0 0 20px rgba(250,204,21,0.6);" onclick="document.getElementById('winner-modal').style.display='none'">CLAIM REWARD 💸</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- FIX: NO IMPLICIT RETURNS IN FOREACH LOOPS ---
+const APP_VERSION = "1.0.0";
+let appDownloadLink = "https://next-level-app.netlify.app"; 
+let rRewardReferrer = 10, rRewardReferee = 10;
+let joinMatchType = "Solo";
+let bannerInterval; 
+
+const cachedLogo = localStorage.getItem('splash_logo');
+if(cachedLogo) {
+    document.getElementById('splash-logo-img').src = cachedLogo;
+    document.getElementById('splash-logo-img').style.display = 'block';
+    document.getElementById('splash-text-logo').style.display = 'none';
+}
+
+const firebaseConfig = { 
+    apiKey: "AIzaSyBsWma0BDnBglAqlaKLphPTwxMkwfdVgnQ", 
+    authDomain: "tournament-a0f7b.firebaseapp.com", 
+    databaseURL: "https://tournament-a0f7b-default-rtdb.firebaseio.com", 
+    projectId: "tournament-a0f7b"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.database();
+
+let uID = "", isLoginMode = true, currentCat = "", userWon = 0;
+let sReward = 10, minDep = 10, minWit = 10;
+let tcData = []; 
+
+function formatTime(ts) {
+    try {
+        if(!ts) return 'N/A';
+        return new Date(ts).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hour12:true});
+    } catch(e) { return 'N/A'; }
+}
+
+function copyToClipboard(text, type) {
+    if(!text || text === 'Waiting...') return;
+    try { navigator.clipboard.writeText(text); showToast(type + " COPIED!"); } 
+    catch(e) {
+        let temp = document.createElement("input"); temp.value = text; document.body.appendChild(temp);
+        temp.select(); document.execCommand("copy"); document.body.removeChild(temp); showToast(type + " COPIED!");
+    }
+}
+
+function showToast(msg) {
+    let t = document.getElementById('toast');
+    t.innerText = msg; t.classList.add('show');
+    setTimeout(() => { t.classList.remove('show'); }, 2500);
+}
+
+db.ref('app_config').on('value', s => {
+    try {
+        const d = s.val() || {};
+        document.getElementById('maintenance-screen').style.display = d.maintenance === true ? 'flex' : 'none';
+        if(d.version && d.version !== APP_VERSION) {
+            document.getElementById('update-screen').style.display = 'flex';
+            document.getElementById('update-link-btn').href = d.update_link || "#";
+        } else { document.getElementById('update-screen').style.display = 'none'; }
+        if(d.update_link) appDownloadLink = d.update_link; 
+
+        if(d.splash_logo && d.splash_logo.trim() !== "") {
+            document.getElementById('splash-logo-img').src = d.splash_logo;
+            document.getElementById('splash-logo-img').style.display = 'block';
+            document.getElementById('splash-text-logo').style.display = 'none';
+            localStorage.setItem('splash_logo', d.splash_logo);
+        } else {
+            document.getElementById('splash-logo-img').style.display = 'none';
+            document.getElementById('splash-text-logo').style.display = 'block';
+            localStorage.removeItem('splash_logo');
+        }
+
+        if(document.getElementById('login-tg-link')) document.getElementById('login-tg-link').href = d.support_out || "#";
+        if(document.getElementById('tg-chan')) document.getElementById('tg-chan').href = d.support_in || "#";
+        if(document.getElementById('yt-chan')) document.getElementById('yt-chan').href = d.yt_link || "#";
+    } catch(e){}
+});
+
+db.ref('settings').on('value', s => {
+    try {
+        if(s.exists()) {
+            const d = s.val();
+            sReward = d.signupBonus || 10; rRewardReferrer = d.referBonusReferrer || 10; rRewardReferee = d.referBonusReferee || 10;
+            minDep = d.minDeposit || 10; minWit = d.minWithdraw || 10;
+            document.getElementById('ref-amt-you').innerText = rRewardReferrer;
+            document.getElementById('ref-amt-friend').innerText = rRewardReferee;
+        }
+    } catch(e){}
+});
+
+db.ref('terms_conditions').on('value', s => { 
+    tcData = []; 
+    if(s.exists()) {
+        s.forEach(c => {
+            tcData.push(c.val().text);
+        });
+    }
+});
+
+db.ref('admin_noti').on('value', s => {
+    try {
+        if(s.exists()) {
+            const d = s.val();
+            if(d.active === true) {
+                document.getElementById('noti-title').innerText = d.title || "UPDATE";
+                document.getElementById('noti-msg').innerText = d.message || "";
+                if(d.link && d.link.trim() !== "") { document.getElementById('noti-link').href = d.link; document.getElementById('noti-link').style.display = 'block'; } 
+                else { document.getElementById('noti-link').style.display = 'none'; }
+                document.getElementById('live-noti').classList.add('show');
+            } else { document.getElementById('live-noti').classList.remove('show'); }
+        }
+    } catch(e){}
+});
+function closeLiveNoti() { document.getElementById('live-noti').classList.remove('show'); }
+
+function shareApp() {
+    const refCode = document.getElementById('refer-page-code').innerText;
+    const shareText = `Join NEXT LEVEL and win real cash in Daily Tournaments! 🎮💰\n\nUse my Referral Code: *${refCode}* to get a FREE Signup Bonus!\n\nDownload App Here: ${appDownloadLink}`;
+    if (navigator.share) { navigator.share({ title: 'Download NEXT LEVEL', text: shareText }).catch(err => console.log('Share dismissed')); } 
+    else { copyToClipboard(shareText, 'SHARE TEXT'); }
+}
+
+auth.onAuthStateChanged(user => {
+    setTimeout(() => {
+        document.getElementById('splash-screen').style.opacity = '0';
+        setTimeout(() => { document.getElementById('splash-screen').style.display = 'none'; }, 500);
+    }, 1800); 
+
+    if (user) {
+        uID = user.uid;
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('app').style.display='block';
+        initApp(user);
+    } else { 
+        document.getElementById('app').style.display='none'; 
+        document.getElementById('auth-screen').style.display='flex'; 
+    }
+});
+
+setInterval(() => {
+    try {
+        db.ref('tournaments').once('value', s => {
+            if(!s.exists()) return;
+            s.forEach(m => {
+                const d = m.val();
+                if(d.status === 'upcoming' && d.timeTimestamp && Date.now() >= d.timeTimestamp) {
+                    const pCount = d.players ? Object.keys(d.players).length : 0;
+                    const slots = d.slots || 0;
+                    if(pCount >= slots && slots > 0) {
+                        db.ref('tournaments/'+m.key).update({ status: 'ongoing', roomUpdateTrigger: Date.now() });
+                    } else {
+                        db.ref('tournaments/'+m.key).update({ timeTimestamp: d.timeTimestamp + (15 * 60 * 1000) });
+                    }
+                }
+            });
+        });
+    } catch(e){}
+}, 15000); 
+
+function initApp(user) {
+    db.ref('users/'+user.uid).on('value', s => {
+        try {
+            const d = s.val() || {coins:0, won:0};
+            userWon = d.won || 0;
+            document.getElementById('u-total').innerText = (d.coins||0) + (d.won||0);
+            document.getElementById('w-total-big').innerText = (d.coins||0) + (d.won||0);
+            document.getElementById('u-win').innerText = "₹"+userWon;
+            document.getElementById('u-dep').innerText = "₹"+(d.coins||0);
+            document.getElementById('p-email').innerText = d.email;
+            let refC = d.myReferCode || user.uid.substring(0,6).toUpperCase();
+            document.getElementById('refer-page-code').innerText = refC;
+            if(d.status === 'banned') { alert("Your account is suspended by Admin."); auth.signOut(); }
+        } catch(e){}
+    });
+
+    db.ref('users/'+user.uid+'/winner_alert').on('value', s => {
+        try {
+            if(s.exists()) {
+                const d = s.val();
+                if(d.time && (Date.now() - d.time) < 300000 && localStorage.getItem('winner_alert_'+d.time) !== 'true') {
+                    document.getElementById('win-m-name').innerText = d.matchName || 'Tournament';
+                    document.getElementById('win-m-amt').innerText = d.amount || 0;
+                    document.getElementById('winner-modal').style.display = 'flex';
+                    if(navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 1000]); 
+                    localStorage.setItem('winner_alert_'+d.time, 'true'); 
+                }
+            }
+        } catch(e){}
+    });
+
+    db.ref('banners').on('value', s => {
+        try {
+            let h = ''; let count = 0;
+            if(s.exists()) {
+                s.forEach(b => { 
+                    h += `<div class="slide"><a href="${b.val().url || '#'}"><img src="${b.val().image}"></a></div>`; 
+                    count++; 
+                });
+                document.getElementById('banner-list').innerHTML = `<div class="slider-wrapper" id="slider-track">${h}</div>`;
+                clearInterval(bannerInterval);
+                if(count > 1) {
+                    bannerInterval = setInterval(() => {
+                        const track = document.getElementById('slider-track');
+                        if(track) {
+                            let maxScroll = track.scrollWidth - track.clientWidth;
+                            if(track.scrollLeft >= maxScroll - 10) { track.scrollTo({ left: 0, behavior: 'smooth' }); } 
+                            else { track.scrollBy({ left: track.clientWidth, behavior: 'smooth' }); }
+                        }
+                    }, 3000);
+                }
+            } else {
+                document.getElementById('banner-list').innerHTML = `<div class="slider-wrapper"><div class="slide"><div style="background:rgba(0,0,0,0.5); height:160px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-weight:bold;">No Offers Available</div></div></div>`;
+            }
+        } catch(e){}
+    });
+
+    db.ref('categories').on('value', s => {
+        try {
+            let h = ''; 
+            if(s.exists()){
+                s.forEach(c => { 
+                    h += `<div style="background:rgba(0,0,0,0.5); border:1px solid var(--border); border-radius:14px; padding:15px; text-align:center; cursor:pointer; box-shadow:inset 0 0 10px rgba(0,210,255,0.05);" onclick="openCat('${c.key}')"><img src="${c.val().image}" style="width:55px; height:55px; object-fit:contain; margin-bottom:10px; filter:drop-shadow(0 0 8px rgba(0,210,255,0.4));"><br><b style="font-size:15px; font-family:'Orbitron'; color:#fff;">${c.val().name}</b></div>`; 
+                });
+            }
+            document.getElementById('cat-list').innerHTML = h;
+        } catch(e){}
+    });
+    
+    db.ref('tournaments').on('value', s => {
+        try {
+            let h = ''; let myMatchesHTML = ''; 
+            const isMatchesTab = document.getElementById('view-matches').classList.contains('active');
+            
+            s.forEach(m => {
+                const d = m.val(); 
+                const joined = d.players && d.players[uID];
+                let mType = d.matchType || 'Solo';
+                let displayTime = d.timeTimestamp ? formatTime(d.timeTimestamp) : (d.time || 'N/A');
+
+                if(joined) {
+                    let outcome = '';
+                    if(d.status === 'completed') {
+                        if(d.winnerUid === uID) outcome = '<span style="color:var(--neon); font-family:Orbitron; font-weight:bold;">WON 🏆</span>';
+                        else outcome = '<span style="color:#ff4444; font-weight:bold;">LOST 💔</span>';
+                    } else {
+                        outcome = '<span style="color:var(--blue); font-weight:bold;">PENDING ⏳</span>';
+                    }
+                    myMatchesHTML += `<div style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b style="color:#fff; font-size:14px; font-family:Orbitron;">${d.name || 'Match'}</b><br>
+                            <small style="color:gray;">Prize: ₹${d.prize || 0} | Mode: ${mType}</small>
+                        </div>
+                        <div>${outcome}</div>
+                    </div>`;
+                }
+
+                if(joined && d.roomUpdateTrigger) {
+                    const now = Date.now();
+                    if((now - d.roomUpdateTrigger) < 300000 && localStorage.getItem('notified_'+m.key) != d.roomUpdateTrigger) {
+                        document.getElementById('alert-m-name').innerText = d.name || 'Match';
+                        document.getElementById('alert-m-id').innerText = d.roomID || 'Wait';
+                        document.getElementById('alert-m-pass').innerText = d.roomPass || 'Wait';
+                        document.getElementById('room-alert-modal').style.display = 'flex';
+                        if(navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 1000]);
+                        localStorage.setItem('notified_'+m.key, d.roomUpdateTrigger);
+                    }
+                }
+
+                if(isMatchesTab && d.category === currentCat) {
+                    let activeFilter = 'upcoming';
+                    if(document.getElementById('tab-ongoing').classList.contains('active')) activeFilter = 'ongoing';
+                    if(document.getElementById('tab-completed').classList.contains('active')) activeFilter = 'completed';
+
+                    if(d.status === activeFilter) {
+                        const pCount = d.players ? Object.keys(d.players).length : 0;
+                        const slots = d.slots || 48;
+                        const isFull = pCount >= slots;
+                        let statusClass = activeFilter === 'upcoming' ? 'status-upcoming' : (activeFilter === 'ongoing' ? 'status-ongoing' : 'status-completed');
+
+                        h += `<div class="t-card">
+                            <div class="card-header-new">
+                                <div><div class="game-title-new">${d.name || 'Match'}</div><div style="font-size:11px; color:var(--blue); font-weight:bold; letter-spacing:1px; margin-top:2px;">[${mType.toUpperCase()}]</div></div>
+                                <div class="game-status-badge ${statusClass}">${activeFilter}</div>
+                            </div>
+                            <div class="prize-container">
+                                <div class="prize-label"><span>🏆</span> TOTAL PRIZE POOL</div>
+                                <div class="prize-amt">₹${d.prize || 0}</div>
+                            </div>
+                            <div class="info-grid-new">
+                                <div class="info-pill"><small>ENTRY</small><b>₹${d.entry || 0}</b></div>
+                                <div class="info-pill"><small>PER KILL</small><b>₹${d.perkill||0}</b></div>
+                                <div class="info-pill" style="grid-column: span 2;"><small>DATE & TIME</small><b style="font-size:11px;">${displayTime}</b></div>
+                            </div>
+                            <div class="rules-box"><span style="font-size:14px; margin-top:2px;">📝</span> <div><b style="color:#fff;">Rules:</b> ${d.rules || 'Play fair and maintain sportsmanship.'}</div></div>
+                            <div class="progress-header"><span>Players Joined</span><span style="color:${isFull ? '#facc15' : 'var(--neon)'};">${pCount}/${slots}</span></div>
+                            <div class="slot-bar"><div class="slot-fill" style="width:${(pCount/slots)*100}%; background:${isFull ? '#facc15' : 'linear-gradient(90deg, var(--blue), var(--neon))'};"></div></div>
+                            
+                            ${activeFilter !== 'completed' ? `<button class="btn-pro" style="background:rgba(0,0,0,0.5); color:var(--blue); border:1px solid var(--border); box-shadow:none; margin-bottom:10px; padding:10px; font-size:12px;" onclick="viewPlayersUser('${m.key}', '${mType}')">👥 VIEW PLAYERS</button>` : ''}
+
+                            ${activeFilter==='upcoming' ? (joined ? `<button class="btn-pro btn-disabled" disabled>✅ JOINED SUCCESSFULLY</button>` : (isFull ? `<button class="btn-pro btn-disabled" disabled>MATCH FULL</button>` : `<button class="btn-pro" onclick="openJoinModal('${m.key}', ${d.entry}, '${(d.name||'').replace(/'/g, "\\'")}', '${mType}')">JOIN NOW • ₹${d.entry}</button>`)) : ''}
+                            
+                            ${activeFilter==='ongoing' ? 
+                                (joined ? 
+                                    `<div class="id-pass-box">
+                                        <div class="id-label">Match Credentials (TAP TO COPY)</div>
+                                        <div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">
+                                            <div style="cursor:pointer; display:inline-flex; align-items:center; gap:8px;" onclick="copyToClipboard('${d.roomID}', 'ROOM ID')">
+                                                <span style="color:var(--text-muted); font-size:13px;">ID:</span> <span class="id-val">${d.roomID||'Waiting...'}</span> <span class="copy-btn">📋</span>
+                                            </div>
+                                        </div>
+                                        <div style="display:flex; justify-content:center; align-items:center;">
+                                            <div style="cursor:pointer; display:inline-flex; align-items:center; gap:8px;" onclick="copyToClipboard('${d.roomPass}', 'PASSWORD')">
+                                                <span style="color:var(--text-muted); font-size:13px;">PASS:</span> <span class="id-val" style="color:var(--neon);">${d.roomPass||'Waiting...'}</span> <span class="copy-btn">📋</span>
+                                            </div>
+                                        </div>
+                                    </div>` : 
+                                    `<div style="background:rgba(255,68,68,0.1); border:1px dashed rgba(255,68,68,0.3); border-radius:10px; padding:12px; text-align:center; color:var(--red); font-size:12px; font-weight:700; margin-top:15px;">❌ YOU DID NOT JOIN THIS MATCH</div>`) 
+                                : ''}
+
+                            ${activeFilter==='completed' ? `
+                                <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:15px; text-align:center; color:var(--text-muted); font-size:12px; font-weight:700; margin-top:15px; border:1px solid rgba(255,255,255,0.1);">
+                                    🏁 MATCH HAS ENDED.
+                                    <div style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.1);">
+                                        <div style="color:#facc15; font-size:10px; letter-spacing:1px; margin-bottom:5px;">🏆 MATCH WINNER 🏆</div>
+                                        <div style="color:var(--neon); font-size:18px; font-family:'Orbitron'; text-shadow:0 0 15px rgba(0,255,136,0.4);">${d.winnerGameId || 'Declared by Admin'}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>`;
+                    }
+                }
+            });
+            
+            document.getElementById('my-matches-list').innerHTML = myMatchesHTML || '<small style="color:gray;">No joined matches yet. Go play!</small>';
+            
+            if(isMatchesTab) document.getElementById('m-list').innerHTML = h || '<div style="text-align:center; margin-top:40px;"><div style="font-size:45px; margin-bottom:10px; filter:drop-shadow(0 0 10px rgba(0,210,255,0.3));">🎮</div><div style="color:var(--text-muted); font-size:14px; font-weight:700;">No Matches Found</div></div>';
+        } catch(e){}
+    });
+    
+    loadHistory();
+}
+
+function openCat(id) { currentCat = id; showTab('matches'); setFilter('upcoming'); }
+function setFilter(f) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+f).classList.add('active');
+    db.ref('tournaments').once('value', s => { initApp({uid: uID}); });
+}
+
+let joinMatchId = "", joinEntryFee = 0;
+function openJoinModal(mId, entry, name, type) {
+    joinMatchId = mId; joinEntryFee = entry; joinMatchType = type;
+    let inputsHTML = ''; const count = type === 'Squad' ? 4 : (type === 'Duo' ? 2 : 1);
+    for(let i=0; i<count; i++) { inputsHTML += `<input type="text" id="j-gameid-${i}" placeholder="Player ${i+1} Game ID" style="border-color:var(--neon); margin-bottom:10px;">`; }
+
+    document.getElementById('m-content').innerHTML = `
+        <h3 style="font-family:'Orbitron'; font-size:18px; margin-top:0; color:#fff; text-transform:uppercase;">${name}</h3>
+        <div style="background:rgba(0,255,136,0.1); padding:20px; border-radius:12px; border:1px dashed var(--neon); margin-bottom:15px;">
+            <div style="color:var(--text-muted); font-size:11px; font-weight:700; margin-bottom:5px; font-family:'Orbitron';">ENTRY FEE</div>
+            <div style="font-size:32px; color:var(--neon); font-weight:900; font-family:'Orbitron'; text-shadow:0 0 15px rgba(0,255,136,0.4);">₹${entry}</div>
+        </div>
+        <p style="color:var(--blue); font-size:12px; font-weight:bold; margin-bottom:10px;">MODE: ${type.toUpperCase()}</p>
+        ${inputsHTML}
+        <button class="btn-pro" style="margin-top:10px;" onclick="confirmJoin()">CONFIRM JOIN</button>
+    `;
+    document.getElementById('modal').style.display='flex';
+}
+
+function confirmJoin() {
+    try {
+        const count = joinMatchType === 'Squad' ? 4 : (joinMatchType === 'Duo' ? 2 : 1);
+        let ids = [];
+        for(let i=0; i<count; i++) {
+            const val = document.getElementById(`j-gameid-${i}`).value.trim();
+            if(!val) return alert(`Please enter Player ${i+1} Game ID!`);
+            ids.push(val);
+        }
+        db.ref('users/'+uID).once('value', s => {
+            const d = s.val() || {};
+            let c = d.coins || 0; let w = d.won || 0;
+            if((c + w) < joinEntryFee) return alert("Low Balance! Please Deposit money.");
+            if(c >= joinEntryFee) { c -= joinEntryFee; } else { let rem = joinEntryFee - c; c = 0; w -= rem; }
+            
+            db.ref('users/'+uID).update({ coins: c, won: w });
+            db.ref('tournaments/'+joinMatchId+'/players/'+uID).set({ gameIds: ids, joinedAt: Date.now() });
+            alert("Successfully Joined!"); closeM();
+        });
+    } catch(e){}
+}
+
+function viewPlayersUser(mId, matchType) {
+    try {
+        document.getElementById('m-content').innerHTML = `
+            <h3 style="color:var(--blue); font-family:'Orbitron'; margin-top:0;">👥 JOINED PLAYERS</h3>
+            <div id="u-players-list" style="max-height:60vh; overflow-y:auto; padding-right:5px; text-align:left;">Loading...</div>
+        `;
+        document.getElementById('modal').style.display='flex';
+
+        db.ref('tournaments/'+mId+'/players').once('value', s => {
+            let h = '';
+            if(s.exists()) {
+                let teamIndex = 1;
+                s.forEach(p => {
+                    const data = p.val();
+                    if(!data) return;
+                    const ids = data.gameIds || [data.gameId || 'Unknown'];
+                    h += `<div style="background:rgba(0,0,0,0.5); padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid var(--border);">`;
+                    if(matchType !== 'Solo') h += `<div style="font-size:11px; color:var(--neon); margin-bottom:8px; font-weight:bold; font-family:'Orbitron';">TEAM ${teamIndex}</div>`;
+                    ids.forEach((id, i) => { h += `<div style="color:#fff; font-size:14px; font-weight:bold; margin-bottom:4px;">👤 ${id}</div>`; });
+                    h += `</div>`; teamIndex++;
+                });
+            } else { h = '<div style="text-align:center; color:gray; font-size:13px; margin-top:20px;">No players joined yet.</div>'; }
+            document.getElementById('u-players-list').innerHTML = h;
+        });
+    } catch(e){}
+}
+
+function openTCModal() {
+    let listHTML = tcData.map(t => `<div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px; text-align:left; font-size:13px; color:#cbd5e1; border-left:3px solid #facc15; line-height:1.5; font-weight:600;">👉 ${t}</div>`).join('');
+    if(tcData.length === 0) listHTML = '<p style="color:var(--text-muted); font-size:13px;">No Terms & Conditions available.</p>';
+    document.getElementById('m-content').innerHTML = `<h3 style="color:#facc15; margin-top:0; font-size:18px; font-family:'Orbitron';">📜 T&C</h3><div style="max-height:60vh; overflow-y:auto; padding-right:5px;">${listHTML}</div>`;
+    document.getElementById('modal').style.display='flex';
+}
+
+function setAuthMode(isLogin) {
+    isLoginMode = isLogin;
+    document.getElementById('tab-login').style.background = isLogin ? 'var(--neon)' : 'rgba(0,0,0,0.5)';
+    document.getElementById('tab-login').style.color = isLogin ? '#000' : 'var(--text-muted)';
+    document.getElementById('tab-login').style.boxShadow = isLogin ? '0 0 10px var(--neon)' : 'none';
+    document.getElementById('tab-signup').style.background = !isLogin ? 'var(--neon)' : 'rgba(0,0,0,0.5)';
+    document.getElementById('tab-signup').style.color = !isLogin ? '#000' : 'var(--text-muted)';
+    document.getElementById('tab-signup').style.boxShadow = !isLogin ? '0 0 10px var(--neon)' : 'none';
+    document.getElementById('reg-extra').style.display = isLogin ? 'none' : 'block';
+    document.getElementById('auth-btn').innerText = isLogin ? 'ENTER SECURELY' : 'CREATE ACCOUNT';
+}
+
+async function handleAuth() {
+    const e = document.getElementById('auth-email').value, p = document.getElementById('auth-pass').value;
+    const ref = document.getElementById('refer-input').value.toUpperCase().trim();
+    if(!e || p.length < 6) return alert("Email & 6-digit Password required!");
+    if(isLoginMode) {
+        auth.signInWithEmailAndPassword(e,p).then(res => { db.ref('users/'+res.user.uid).update({ password: p }); }).catch(err => alert(err.message));
+    } else {
+        try {
+            let refValid = false, refUserKey = "", refUserEmail = "";
+            if(ref) {
+                const usersSnap = await db.ref('users').once('value');
+                usersSnap.forEach(u => { if(u.val().myReferCode === ref) { refValid = true; refUserKey = u.key; refUserEmail = u.val().email; } });
+                if(!refValid) return alert("Invalid Referral Code!");
+            }
+            const res = await auth.createUserWithEmailAndPassword(e,p);
+            const myRef = res.user.uid.substring(0,6).toUpperCase();
+            let finalCoins = sReward + (refValid ? rRewardReferee : 0);
+            await db.ref('users/'+res.user.uid).set({ email:e, password:p, coins:finalCoins, won:0, status:'active', myReferCode:myRef, join_date:Date.now(), referredBy: refValid ? refUserEmail : null });
+            if(refValid) { db.ref('users/'+refUserKey+'/coins').transaction(c => (c||0) + rRewardReferrer); }
+            alert(`Account Created! ₹${finalCoins} Added.`);
+        } catch(err) { alert(err.message); }
+    }
+}
+
+function openDeposit() {
+    db.ref('app_config/upi').once('value', s => {
+        const upi = s.val() || "admin@upi";
+        const qr = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${upi}`;
+        document.getElementById('m-content').innerHTML = `
+            <h3 style="color:#fff; margin-top:0; font-family:'Orbitron';">DEPOSIT MONEY</h3>
+            <div style="background:#fff; padding:10px; display:inline-block; border-radius:12px; margin:10px 0; border:3px solid var(--neon);">
+                <img src="${qr}" width="150">
+            </div>
+            <div style="font-size:13px; color:var(--blue); margin-bottom:15px; background:rgba(0,210,255,0.1); padding:10px; border-radius:8px; border:1px dashed var(--blue); font-weight:700;">UPI: <b style="color:#fff;">${upi}</b></div>
+            <input type="number" id="damt" placeholder="Amount ₹ (Min ₹${minDep})">
+            <input type="text" id="dutr" placeholder="12-Digit UTR Number">
+            <button class="btn-pro" style="margin-top:10px;" onclick="subDep()">SUBMIT DEPOSIT</button>
+        `;
+        document.getElementById('modal').style.display='flex';
+    });
+}
+function subDep() {
+    const amtInput = document.getElementById('damt').value, utrInput = document.getElementById('dutr').value.trim();
+    const amount = parseInt(amtInput);
+    if (!amtInput || !utrInput || isNaN(amount) || amount < minDep) return alert("Min Deposit is ₹" + minDep);
+    db.ref('requests/deposits').push({ uid: uID, amount: amount, ref: utrInput, status: 'pending', time: Date.now() });
+    alert("Request Sent!"); closeM(); 
+}
+
+function openWithdraw() {
+    document.getElementById('m-content').innerHTML = `
+        <h3 style="color:#fff; margin-top:0; font-family:'Orbitron';">WITHDRAW MONEY</h3>
+        <div style="background:rgba(255,68,68,0.1); padding:20px; border-radius:12px; border:1px dashed rgba(255,68,68,0.3); margin-bottom:15px;">
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:5px; font-family:'Orbitron';">WINNING BALANCE</div>
+            <div style="font-size:32px; color:var(--red); font-weight:900; font-family:'Orbitron'; text-shadow:0 0 15px rgba(255,68,68,0.4);">₹${userWon}</div>
+        </div>
+        <input type="number" id="wamt" placeholder="Amount ₹ (Min ₹${minWit})">
+        <input type="text" id="wupi" placeholder="Enter UPI ID">
+        <button class="btn-pro" style="margin-top:10px; background:linear-gradient(90deg, #ff4444, #cc0000); color:#fff; box-shadow:0 0 15px rgba(255,68,68,0.4);" onclick="subWit()">SUBMIT REQUEST</button>
+    `;
+    document.getElementById('modal').style.display='flex';
+}
+function subWit() {
+    const amtInput = document.getElementById('wamt').value, upiInput = document.getElementById('wupi').value.trim();
+    const amount = parseInt(amtInput);
+    if (!amtInput || !upiInput || isNaN(amount) || amount < minWit) return alert("Min Withdraw is ₹" + minWit);
+    if (amount > userWon) return alert("Low Winning Balance!");
+    db.ref('requests/withdraws').push({ uid: uID, amount: amount, ref: upiInput, status: 'pending', time: Date.now() });
+    alert("Request Sent!"); closeM(); 
+}
+
+async function applyPromo() {
+    try {
+        const code = document.getElementById('p-code').value.toUpperCase().trim();
+        if(!code) return alert("Enter Code!");
+        const snap = await db.ref('promo_codes/'+code).once('value');
+        if(!snap.exists()) return alert("Invalid Code!");
+        const d = snap.val();
+        if(d.used >= d.limit) return alert("Limit Reached!");
+        const usedSnap = await db.ref('promo_codes/'+code+'/users_uids').once('value');
+        let already = false; if(usedSnap.exists()){ Object.values(usedSnap.val()).forEach(uid => { if(uid===uID) already=true; }); }
+        if(already) return alert("Already Used!");
+
+        db.ref('users/'+uID+'/coins').transaction(c => (c||0) + d.amount);
+        db.ref('promo_codes/'+code+'/used').transaction(u => (u||0) + 1);
+        db.ref('promo_codes/'+code+'/users_uids').push(uID);
+        db.ref('requests/history').push({ uid: uID, amount: d.amount, status: 'approved', adminMsg: 'Promo: ' + code, type: 'Promo', time: Date.now() });
+        alert("₹"+d.amount+" Added!"); document.getElementById('p-code').value = "";
+    } catch(e){}
+}
+
+function loadHistory() {
+    db.ref('requests').on('value', s => {
+        try {
+            let h = ''; const data = s.val() || {};
+            ['deposits','withdraws','history'].forEach(n => {
+                if(data[n]) Object.values(data[n]).forEach(v => {
+                    if(v.uid === uID) {
+                        let color = (v.status === 'approved' || v.status === 'success') ? 'var(--neon)' : (v.status === 'pending' ? 'var(--blue)' : '#ff4444');
+                        h += `<div style="background:rgba(0,0,0,0.4); padding:15px; border-radius:12px; border:1px solid var(--border); border-left:4px solid ${color}; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px; font-weight:700; font-family:'Orbitron';">
+                                <span style="color:#fff;">${(v.type||n).toUpperCase()}</span>
+                                <span style="color:${color}; font-size:16px;">₹${v.amount}</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:600;">${v.adminMsg || 'Status: '+v.status.toUpperCase()}</div>
+                        </div>`;
+                    }
+                });
+            });
+            document.getElementById('history-list').innerHTML = h || '<div style="text-align:center; color:var(--text-muted); font-size:13px; font-weight:700; margin-top:20px;">No Transactions</div>';
+        } catch(e){}
+    });
+}
+
+function showTab(id, el) { 
+    try {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
+        document.getElementById('view-'+id).classList.add('active'); 
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
+        if(el) el.classList.add('active'); 
+    } catch(e){}
+}
+function closeM() { document.getElementById('modal').style.display='none'; }
+</script>
+</body>
+</html>
